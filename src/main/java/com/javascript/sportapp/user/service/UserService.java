@@ -69,13 +69,13 @@ public class UserService{
 
     @Transactional(readOnly = true)
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken
-                (
-                request.getLogin(),
-                request.getPassword()
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getLogin(),
+                        request.getPassword()
+                )
         );
-        authenticationManager.authenticate( token ).isAuthenticated();
-        if(token.isAuthenticated()) System.out.println("wefawerfawergfewrafgwergweagerwgerg");
+
         User user = userRepository.findUserByLogin(request.getLogin())
                 .orElseThrow(()-> new UsernameNotFoundException("User was not found"));
 

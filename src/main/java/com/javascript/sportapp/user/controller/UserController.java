@@ -31,20 +31,13 @@ public class UserController {
         return new ResponseEntity<>(userService.createUser(request), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/authenticate", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request
     ){
         return new ResponseEntity<>(userService.authenticate(request), HttpStatus.OK);
     }
 
-    @PostMapping( value = "/authenticate", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<AuthenticationResponse> someControllerMethod( @RequestParam Map<String, String> body ) {
-        AuthenticationRequest request = new AuthenticationRequest();
-        request.setLogin(body.get("login"));
-        request.setPassword(body.get("password"));
-        return new ResponseEntity<>(userService.authenticate(request), HttpStatus.OK);
-    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUser(
