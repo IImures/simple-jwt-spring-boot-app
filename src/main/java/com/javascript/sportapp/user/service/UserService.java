@@ -1,34 +1,41 @@
 package com.javascript.sportapp.user.service;
 
+import com.javascript.sportapp.configuration.JwtService;
 import com.javascript.sportapp.roles.entity.Role;
 import com.javascript.sportapp.roles.repository.RoleRepository;
 import com.javascript.sportapp.roles.respoce.RoleResponse;
+import com.javascript.sportapp.user.controller.request.AuthenticationRequest;
 import com.javascript.sportapp.user.controller.request.UserRequest;
+import com.javascript.sportapp.user.controller.response.AuthenticationResponse;
 import com.javascript.sportapp.user.controller.response.UserResponse;
 import com.javascript.sportapp.user.entity.User;
 import com.javascript.sportapp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService{
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-    //todo change exception to my own
-    public User loadUserByUsername(String username) {
-        return userRepository.findUserByLogin(username).orElseThrow(()->new RuntimeException("User not found"));
-    }
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
-    public UserResponse createUser(UserRequest details){
+    @Transactional
+    public AuthenticationResponse createUser(UserRequest details){
         boolean isExists = false; //todo change to true back!!!!
         try {
             userRepository.findUserByLogin(details.getLogin()).orElseThrow(()-> new RuntimeException("User does not exists"));
@@ -41,6 +48,7 @@ public class UserService implements UserDetailsService {
 
         BeanUtils.copyProperties(details, newUser);
         newUser.setIsEnabled(true);
+        newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
 
         Set<Role> roles = new HashSet<>();
         for(Long roleId : details.getRoles()){
@@ -54,10 +62,37 @@ public class UserService implements UserDetailsService {
         newUser.setRoles(roles);
 
         User saved = userRepository.save(newUser);
-        UserResponse response =  new UserResponse();
-        BeanUtils.copyProperties(saved, response);
+        String jwtToken = jwtService.generateToken(saved);
+
+        return new AuthenticationResponse(jwtToken);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken
+                (
+                request.getLogin(),
+                request.getPassword()
+        );
+        authenticationManager.authenticate( token ).isAuthenticated();
+        if(token.isAuthenticated()) System.out.println("wefawerfawergfewrafgwergweagerwgerg");
+        User user = userRepository.findUserByLogin(request.getLogin())
+                .orElseThrow(()-> new UsernameNotFoundException("User was not found"));
+
+        String jwtToken = jwtService.generateToken(user);
+        return new AuthenticationResponse(jwtToken);
+    }
+
+    @Transactional
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new RuntimeException("User not found"));
+
+        UserResponse response = new UserResponse();
+        BeanUtils.copyProperties(user, response);
+
         response.setRoles(
-                saved.getRoles().stream().map((RoleResponse::new)).toArray(RoleResponse[]::new)
+                user.getRoles().stream().map((RoleResponse::new)).toArray(RoleResponse[]::new)
         );
         return response;
     }
