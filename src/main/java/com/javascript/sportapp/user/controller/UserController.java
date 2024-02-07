@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.parameters.P;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -31,13 +32,24 @@ public class UserController {
         return new ResponseEntity<>(userService.createUser(request), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/authenticate")
+    @PostMapping(value = "/authenticate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request
     ){
         return new ResponseEntity<>(userService.authenticate(request), HttpStatus.OK);
     }
 
+    @PostMapping( value = "/authenticate", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public String  someControllerMethod(Model model, @ModelAttribute("AuthenticationRequest") AuthenticationRequest request) {
+
+        AuthenticationResponse response = userService.authenticate(request);
+
+        if(response == null){
+            model.addAttribute("param.error", true);
+            return "login";
+        }
+        return "login";
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUser(
