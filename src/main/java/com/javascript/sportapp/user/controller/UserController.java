@@ -6,6 +6,7 @@ import com.javascript.sportapp.user.controller.response.AuthenticationResponse;
 import com.javascript.sportapp.user.controller.response.UserResponse;
 import com.javascript.sportapp.user.entity.User;
 import com.javascript.sportapp.user.service.UserService;
+import jakarta.annotation.security.RolesAllowed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
+@CrossOrigin
 @RequestMapping("api/v1/user")
 public class UserController {
 
@@ -32,25 +34,16 @@ public class UserController {
         return new ResponseEntity<>(userService.createUser(request), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/authenticate", consumes = MediaType.APPLICATION_JSON_VALUE)
+
+    @PostMapping(value = "/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request
     ){
+        System.out.println("validation");
         return new ResponseEntity<>(userService.authenticate(request), HttpStatus.OK);
     }
 
-    @PostMapping( value = "/authenticate", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public String  someControllerMethod(Model model, @ModelAttribute("AuthenticationRequest") AuthenticationRequest request) {
-
-        AuthenticationResponse response = userService.authenticate(request);
-
-        if(response == null){
-            model.addAttribute("param.error", true);
-            return "login";
-        }
-        return "login";
-    }
-
+    @RolesAllowed("ADMIN")
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUser(
             @PathVariable Long userId

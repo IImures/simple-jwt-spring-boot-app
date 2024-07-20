@@ -2,6 +2,7 @@ package com.javascript.sportapp.configuration;
 
 
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.filters.CorsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -13,6 +14,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import static org.springframework.http.HttpMethod.GET;
 
 @Configuration
 @EnableWebSecurity
@@ -35,6 +40,7 @@ public class Security{
                                         .requestMatchers("/api/v1/user/register").permitAll()
                                         .requestMatchers("/api/v1/user/authenticate").permitAll()
                                         .requestMatchers("/error").permitAll()
+                                        .requestMatchers(GET, "/api/v1/user/**").hasRole("ADMIN")
                                         //.requestMatchers("/login").permitAll()
                                         .anyRequest().authenticated()
 //                                        .anyRequest().permitAll()
@@ -46,13 +52,26 @@ public class Security{
 ////                                        .requestMatchers("/").permitAll()
                 )
                 .userDetailsService(userService)
-                .formLogin(form ->
-                        form.loginPage("/login")
-                                .permitAll())
+//                .formLogin(form ->
+//                        form.loginPage("/login")
+//                                .permitAll())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+//    @Bean
+//    public CorsFilter corsFilter() {
+//        UrlBasedCorsConfigurationSource source =
+//                new UrlBasedCorsConfigurationSource();
+//        CorsConfiguration config = new CorsConfiguration();
+//        config.setAllowCredentials(true);
+//        config.addAllowedOrigin("*");
+//        config.addAllowedHeader("*");
+//        config.addAllowedMethod("*");
+//        source.registerCorsConfiguration("/**", config);
+//        return new CorsFilter();
+//    }
 
 }
